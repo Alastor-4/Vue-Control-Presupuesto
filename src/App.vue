@@ -2,15 +2,41 @@
 import ControlPresupuesto from "./components/ControlPresupuesto.vue";
 import IconoNuevoGasto from "./assets/img/nuevo-gasto.svg";
 import Presupuesto from "./components/Presupuesto.vue";
+import { generateId } from "../src/helpers";
+import Debit from "./components/Debit.vue";
 import Modal from "./components/Modal.vue";
-import { ref, reactive } from "vue";
+import { reactive, ref, watch } from "vue";
 
 const budget = ref(0);
 const budgetAvaiable = ref(0);
+const totalDebits = ref(0);
+const debits = ref([]);
+
+watch(debits, () => {
+    totalDebits.value = debits.value.reduce((total, debit) => debit.quantity + total, 0);
+    budgetAvaiable.value = budget.value - totalDebits.value;
+}, { deep: true });
+
 const modal = reactive({
     show: false,
     animate: false,
 });
+
+watch(modal, () => {
+    if (!modal.show) {
+        resetDebit();
+    }
+}, { deep: true });
+
+const resetDebit = () => {
+    Object.assign(debit, {
+        name: "",
+        quantity: "",
+        category: "",
+        id: null,
+        date: Date.now(),
+    });
+};
 
 const debit = reactive({
     name: "",
@@ -19,6 +45,7 @@ const debit = reactive({
     id: null,
     date: Date.now(),
 });
+
 
 const defineBudget = (quantity) => {
     budget.value = quantity;
@@ -31,6 +58,7 @@ const showModal = () => {
         modal.animate = true;
     }, 300);
 };
+
 const closeModal = () => {
     modal.animate = false;
     setTimeout(() => {
@@ -38,30 +66,61 @@ const closeModal = () => {
     }, 300);
 };
 
+const saveDebit = () => {
+    if (debit.id) {
+        const { id } = debit;
+        const i = debits.value.findIndex(debit => debit.id === id);
+        debits.value[i] = { ...debit };
+    } else {
+        debits.value.push({ ...debit, id: generateId() });
+    }
+    closeModal();
+    resetDebit();
+};
+
+const selectDebit = (id) => {
+    const editDebit = debits.value.filter(debit => debit.id === id)[0];
+    Object.assign(debit, editDebit);
+    showModal();
+};
+
+const deleteDebit = () => {
+
+};
+
 </script>
 
 <template>
-    <div>
+    <div :class="{fixed: modal.show}">
         <header>
             <h1>Planificador de Gastos</h1>
 
             <div class="header-container container shadow">
                 <Presupuesto v-if="budget === 0"
                              @define-budget="defineBudget"/>
-                <ControlPresupuesto v-else :budget="budget" :budgetAvaiable="budgetAvaiable"/>
+                <ControlPresupuesto v-else :budget="budget" :budget-avaiable="budgetAvaiable"
+                                    :total-debits="totalDebits"/>
             </div>
         </header>
         <main v-if="budget > 0">
+            <div class="debit-list container">
+                <h2>{{ debits.length > 0 ? "Gastos" : "No hay gastos" }}</h2>
+                <Debit v-for="debit in debits" :key="debit.id" :debit="debit" @select-debit="selectDebit"/>
+            </div>
             <div class="create-debit">
                 <img :src="IconoNuevoGasto" alt="Icono Nuevo Gasto" @click="showModal"/>
             </div>
             <Modal
                 v-if="modal.show"
-                @closeModal="closeModal"
                 :modal="modal"
-                :v-model:name="debit.name"
-                :v-model:quantity="debit.quantity"
-                :v-model:category="debit.category"
+                :budget-avaiable="budgetAvaiable"
+                :id="debit.id"
+                v-model:name="debit.name"
+                v-model:quantity="debit.quantity"
+                v-model:category="debit.category"
+                @close-modal="closeModal"
+                @delete-debit="deleteDebit"
+                @save-debit="saveDebit"
             />
         </main>
     </div>
@@ -78,6 +137,7 @@ const closeModal = () => {
     --black: #000;
     --red: #B91C1C;
     --remove: #DB2777;
+    --delete: #EF4444;
     --dark-remove: #C11D67;
     margin: 0;
 }
@@ -122,6 +182,11 @@ header h1 {
     text-align: center;
 }
 
+.fixed {
+    overflow: hidden;
+    height: 100vh;
+}
+
 .container {
     width: 90%;
     max-width: 80rem;
@@ -152,4 +217,12 @@ header h1 {
     cursor: pointer;
 }
 
+.debit-list {
+    margin-top: 10rem;
+}
+
+.debit-list h2 {
+    font-weight: 900;
+    color: var(--dark-gray);
+}
 </style>

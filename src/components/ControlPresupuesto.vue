@@ -11,6 +11,11 @@ const props = defineProps({
         type: Number,
         required: true,
     },
+    totalDebits: {
+        type: Number,
+        required: true,
+        default: 0,
+    },
 });
 </script>
 
@@ -23,7 +28,7 @@ const props = defineProps({
             <button class="reset-app">Reiniciar aplicación</button>
             <p><span>Presupuesto: </span>{{ formatQuantity(budget) }}</p>
             <p><span>Disponible: </span>{{ formatQuantity(budgetAvaiable) }}</p>
-            <p><span>Gastado: </span> $0</p>
+            <p><span>Gastado: </span> {{ formatQuantity(totalDebits) }}</p>
         </div>
     </div>
 </template>
