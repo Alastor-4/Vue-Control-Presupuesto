@@ -12,6 +12,14 @@ const modal = reactive({
     animate: false,
 });
 
+const debit = reactive({
+    name: "",
+    quantity: "",
+    category: "",
+    id: null,
+    date: Date.now(),
+});
+
 const defineBudget = (quantity) => {
     budget.value = quantity;
     budgetAvaiable.value = quantity;
@@ -47,7 +55,14 @@ const closeModal = () => {
             <div class="create-debit">
                 <img :src="IconoNuevoGasto" alt="Icono Nuevo Gasto" @click="showModal"/>
             </div>
-            <Modal v-if="modal.show" @closeModal="closeModal" :modal="modal"/>
+            <Modal
+                v-if="modal.show"
+                @closeModal="closeModal"
+                :modal="modal"
+                :v-model:name="debit.name"
+                :v-model:quantity="debit.quantity"
+                :v-model:category="debit.category"
+            />
         </main>
     </div>
 </template>

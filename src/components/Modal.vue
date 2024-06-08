@@ -1,10 +1,22 @@
 <script setup>
 import CerrarModal from "../assets/img/cerrar.svg";
 
-const emit = defineEmits([ "closeModal" ]);
+const emit = defineEmits([ "closeModal", "update:name", "update:quantity", "update:category" ]);
 const props = defineProps({
     modal: {
         type: Object,
+        required: true,
+    },
+    name: {
+        type: String,
+        required: true,
+    },
+    quantity: {
+        type: [ Number, String ],
+        required: true,
+    },
+    category: {
+        type: String,
         required: true,
     },
 });
@@ -20,16 +32,31 @@ const props = defineProps({
                 <legend>Añadir Gasto</legend>
                 <div class="field">
                     <label for="name">Gasto:</label>
-                    <input type="text" id="name" placeholder="Añade nombre del Gasto"/>
+                    <input
+                        type="text"
+                        id="name"
+                        placeholder="Añade nombre del Gasto"
+                        :value="name"
+                        @input="$emit('update:name', $event.target.value)"/>
 
                 </div>
                 <div class="field">
                     <label for="quantity">Cantidad:</label>
-                    <input type="number" id="quantity" placeholder="Añade la cantidad del Gasto"/>
+                    <input
+                        type="number"
+                        id="quantity"
+                        placeholder="Añade la cantidad del Gasto"
+                        :value="quantity"
+                        @input="$emit('update:quantity', +$event.target.value)"
+                    />
                 </div>
                 <div class="field">
                     <label for="category">Categoría:</label>
-                    <select id="category">
+                    <select
+                        id="category"
+                        :value="category"
+                        @input="$emit('update:category', $event.target.value)"
+                    >
                         <option value="">-- Seleccione --</option>
                         <option value="save">Ahorro</option>
                         <option value="home">Casa</option>
