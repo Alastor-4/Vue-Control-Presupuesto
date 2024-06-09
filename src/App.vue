@@ -1,32 +1,53 @@
 <script setup>
 import ControlPresupuesto from "./components/ControlPresupuesto.vue";
+import { reactive, ref, watch, computed, onMounted } from "vue";
 import IconoNuevoGasto from "./assets/img/nuevo-gasto.svg";
 import Presupuesto from "./components/Presupuesto.vue";
+import Filtros from "./components/Filtros.vue";
 import { generateId } from "../src/helpers";
 import Debit from "./components/Debit.vue";
 import Modal from "./components/Modal.vue";
-import { reactive, ref, watch } from "vue";
 
 const budget = ref(0);
 const budgetAvaiable = ref(0);
 const totalDebits = ref(0);
 const debits = ref([]);
-
-watch(debits, () => {
-    totalDebits.value = debits.value.reduce((total, debit) => debit.quantity + total, 0);
-    budgetAvaiable.value = budget.value - totalDebits.value;
-}, { deep: true });
+const filter = ref("");
 
 const modal = reactive({
     show: false,
     animate: false,
 });
 
+watch(debits, () => {
+    totalDebits.value = debits.value.reduce((total, debit) => debit.quantity + total, 0);
+    budgetAvaiable.value = budget.value - totalDebits.value;
+
+    localStorage.setItem("debits", JSON.stringify(debits.value));
+}, { deep: true });
+
 watch(modal, () => {
     if (!modal.show) {
         resetDebit();
     }
 }, { deep: true });
+
+watch(budget, () => {
+    localStorage.setItem("budget", JSON.stringify(budget.value));
+});
+
+onMounted(() => {
+    const budgetStorage = localStorage.getItem("budget");
+    if (budgetStorage) {
+        budget.value = Number(budgetStorage);
+        budgetAvaiable.value = Number(budgetStorage);
+    }
+
+    const debitsStorage = localStorage.getItem("debits");
+    if (debitsStorage) {
+        debits.value = JSON.parse(debitsStorage);
+    }
+});
 
 const resetDebit = () => {
     Object.assign(debit, {
@@ -45,7 +66,6 @@ const debit = reactive({
     id: null,
     date: Date.now(),
 });
-
 
 const defineBudget = (quantity) => {
     budget.value = quantity;
@@ -85,9 +105,16 @@ const selectDebit = (id) => {
 };
 
 const deleteDebit = () => {
-
+    debits.value = debits.value.filter(debitState => debitState.id !== debit.id);
+    closeModal();
 };
 
+const filteredDebits = computed(() => {
+    if (filter.value) {
+        return debits.value.filter(debit => debit.category === filter.value);
+    }
+    return debits.value;
+});
 </script>
 
 <template>
@@ -103,9 +130,10 @@ const deleteDebit = () => {
             </div>
         </header>
         <main v-if="budget > 0">
+            <Filtros v-model:filter="filter"/>
             <div class="debit-list container">
-                <h2>{{ debits.length > 0 ? "Gastos" : "No hay gastos" }}</h2>
-                <Debit v-for="debit in debits" :key="debit.id" :debit="debit" @select-debit="selectDebit"/>
+                <h2>{{ filteredDebits.length > 0 ? "Gastos" : "No hay gastos" }}</h2>
+                <Debit v-for="debit in filteredDebits" :key="debit.id" :debit="debit" @select-debit="selectDebit"/>
             </div>
             <div class="create-debit">
                 <img :src="IconoNuevoGasto" alt="Icono Nuevo Gasto" @click="showModal"/>
