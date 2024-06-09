@@ -115,6 +115,12 @@ const filteredDebits = computed(() => {
     }
     return debits.value;
 });
+
+const resetApp = () => {
+    debits.value = [];
+    budget.value = 0;
+};
+
 </script>
 
 <template>
@@ -125,8 +131,13 @@ const filteredDebits = computed(() => {
             <div class="header-container container shadow">
                 <Presupuesto v-if="budget === 0"
                              @define-budget="defineBudget"/>
-                <ControlPresupuesto v-else :budget="budget" :budget-avaiable="budgetAvaiable"
-                                    :total-debits="totalDebits"/>
+                <ControlPresupuesto
+                    v-else
+                    :budget="budget"
+                    :budget-avaiable="budgetAvaiable"
+                    :total-debits="totalDebits"
+                    @reset-app="resetApp"
+                />
             </div>
         </header>
         <main v-if="budget > 0">
